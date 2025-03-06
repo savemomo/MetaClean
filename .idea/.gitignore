@@ -1,3 +1,28 @@
-# Default ignored files
-/shelf/
-/workspace.xml
+# 忽略整个 .idea 目录
+.idea/
+
+# 但保留一些必要的配置文件
+!.idea/misc.xml
+!.idea/modules.xml
+!.idea/vcs.xml
+!.idea/workspace.xml
+!.idea/runConfigurations/
+!.idea/gradle.xml
+
+# 忽略 IDE 索引文件和工作区相关的文件
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries/
+.idea/shelf/
+
+# 其他与 Android 开发相关的忽略规则
+*.iml
+.gradle/
+local.properties
+/.cxx/
+.externalNativeBuild/
+.cxx/
+captures/
+build/
+outputs/
