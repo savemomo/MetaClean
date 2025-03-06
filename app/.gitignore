@@ -1,0 +1,63 @@
+# 编译文件
+/build/
+/out/
+/captures/
+/*.iml
+
+# 本地配置文件
+/local.properties
+/.idea/
+/.gradle/
+/.settings/
+
+# Gradle 缓存和日志
+.gradle/
+/**/build/
+!gradle-wrapper.jar
+/captures/
+/outputs/
+/generated/
+/gradle/
+/buildSrc/.gradle/
+
+# 运行时文件
+/.DS_Store
+*.log
+*.swp
+*.swo
+*.lock
+*.tmp
+
+# 依赖库
+/.cxx/
+/.externalNativeBuild/
+/*.apk
+/*.aab
+
+# Jetpack Compose 预览缓存
+/.compose-cache/
+
+# Android Studio 工作区文件
+/.idea/workspace.xml
+/.idea/caches/
+/.idea/libraries/
+/.idea/modules.xml
+/.idea/gradle.xml
+/.idea/assetWizardSettings.xml
+/.idea/navEditor.xml
+/.idea/httpRequests/
+/.idea/codeStyles/
+
+# keystore（防止意外泄露）
+/*.keystore
+/*.jks
+
+# NDK 编译文件
+.cxx/
+.externalNativeBuild/
+
+# VSCode 设置（如果使用）
+.vscode/
+
+# MacOS 系统文件
+.DS_Store
