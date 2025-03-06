@@ -36,10 +36,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            // 处理相册分享的图片
             val sharedImages = handleSharedImages(intent)
+
             MetaCleanTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MainScreen(modifier = Modifier.padding(innerPadding), sharedImages)
+                    MainScreen(
+                        modifier = Modifier.padding(innerPadding),
+                        sharedImages
+                    )
                 }
             }
         }
@@ -49,12 +54,10 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainScreen(modifier: Modifier = Modifier, sharedImages: List<Uri> = emptyList()) {
     val context = LocalContext.current
-    var selectedImages by remember { mutableStateOf(sharedImages) }
+    var selectedImages by remember { mutableStateOf(sharedImages) } // 默认选中分享的图片
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
-    ) { uris ->
-        selectedImages = uris
-    }
+    ) { uris -> selectedImages = uris }
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -78,8 +81,17 @@ fun MainScreen(modifier: Modifier = Modifier, sharedImages: List<Uri> = emptyLis
 
                     Button(onClick = {
                         val newUri = cleanAndSaveImage(context, uri)
-                        scope.launch {
-                            snackbarHostState.showSnackbar("图片已保存", actionLabel = "查看")
+                        if (newUri != null) {
+                            scope.launch {
+                                val result = snackbarHostState.showSnackbar(
+                                    message = "图片已保存",
+                                    actionLabel = "查看",
+                                    duration = SnackbarDuration.Short
+                                )
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    openGallery(context, newUri)
+                                }
+                            }
                         }
                     }) {
                         Text("保存去信息的图片")
@@ -92,6 +104,9 @@ fun MainScreen(modifier: Modifier = Modifier, sharedImages: List<Uri> = emptyLis
     }
 }
 
+/**
+ * 从 Uri 读取 Bitmap（兼容 Android 版本）
+ */
 private fun loadBitmapFromUri(context: Context, uri: Uri): Bitmap? {
     return try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -106,14 +121,20 @@ private fun loadBitmapFromUri(context: Context, uri: Uri): Bitmap? {
     }
 }
 
+/**
+ * 清理图片的 Exif 信息并保存到相册
+ */
 private fun cleanAndSaveImage(context: Context, uri: Uri): Uri? {
     return try {
         context.contentResolver.openInputStream(uri)?.use { inputStream ->
+            // 创建临时文件存储图片数据
             val tempFile = File.createTempFile("temp", ".jpg", context.cacheDir)
             tempFile.outputStream().use { outputStream -> inputStream.copyTo(outputStream) }
 
+            // 清除 EXIF 数据
             val cleanedFile = removeExifData(tempFile) ?: return null
 
+            // 定义存储到相册的文件名
             val randomFileName = "IMG_${UUID.randomUUID()}.jpg"
             val values = ContentValues().apply {
                 put(MediaStore.Images.Media.DISPLAY_NAME, randomFileName)
@@ -121,8 +142,11 @@ private fun cleanAndSaveImage(context: Context, uri: Uri): Uri? {
                 put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/ExifCleaner")
             }
 
-            val imageUri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return null
+            // 插入到相册
+            val imageUri = context.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                ?: return null
 
+            // 写入去除 Exif 的图片
             context.contentResolver.openOutputStream(imageUri)?.use { outputStream ->
                 FileInputStream(cleanedFile).use { inputStream -> inputStream.copyTo(outputStream) }
             }
@@ -135,7 +159,10 @@ private fun cleanAndSaveImage(context: Context, uri: Uri): Uri? {
     }
 }
 
-fun removeExifData(imageFile: File): File? {
+/**
+ * 去除 Exif 信息，返回去除后的文件
+ */
+private fun removeExifData(imageFile: File): File? {
     return try {
         val exif = ExifInterface(imageFile.absolutePath)
 
@@ -155,7 +182,10 @@ fun removeExifData(imageFile: File): File? {
     }
 }
 
-fun openGallery(context: Context, uri: Uri?) {
+/**
+ * 打开相册查看图片
+ */
+private fun openGallery(context: Context, uri: Uri?) {
     uri ?: return
     val intent = Intent(Intent.ACTION_VIEW).apply {
         setDataAndType(uri, "image/*")
@@ -164,7 +194,9 @@ fun openGallery(context: Context, uri: Uri?) {
     context.startActivity(intent)
 }
 
-// 处理从相册分享的图片
+/**
+ * 处理从相册分享的图片
+ */
 private fun handleSharedImages(intent: Intent): List<Uri> {
     return when (intent.action) {
         Intent.ACTION_SEND -> {  // 处理单张图片
